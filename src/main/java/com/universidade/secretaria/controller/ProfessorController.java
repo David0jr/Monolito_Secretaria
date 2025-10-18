@@ -1,72 +1,83 @@
 package com.universidade.secretaria.controller;
 
-import com.universidade.secretaria.dto.ProfessorDto;
-import com.universidade.secretaria.model.Professor;
+import com.universidade.secretaria.dto.DisciplinaDto;
+import com.universidade.secretaria.dto.HistoricoAcademicoDto;
+import com.universidade.secretaria.dto.ProfessorRegistroDTO;
 import com.universidade.secretaria.service.ProfessorService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.universidade.secretaria.service.HistoricoAcademicoService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/api/professores")
 public class ProfessorController {
 
-    @Autowired
-    private ProfessorService professorService;
+    private final ProfessorService professorService;
+    private final HistoricoAcademicoService historicoAcademicoService;
 
-    // Novo endpoint único para criar um professor e sua conta de usuário
-    @PostMapping
-    @PreAuthorize("hasRole('SECRETARIA')")
-    public ResponseEntity<?> salvarProfessor(@Valid @RequestBody ProfessorDto professorDto) {
-        try {
-            Professor novoProfessor = professorService.salvar(professorDto);
-            return new ResponseEntity<>(novoProfessor, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ProfessorController(ProfessorService professorService, HistoricoAcademicoService historicoAcademicoService) {
+        this.professorService = professorService;
+        this.historicoAcademicoService = historicoAcademicoService;
     }
 
+    // POST - Criação
+    @PostMapping
+    @PreAuthorize("hasRole('SECRETARIA')")
+    public ResponseEntity<ProfessorRegistroDTO> salvarProfessor(@Valid @RequestBody ProfessorRegistroDTO professorRegistroDTO) {
+        ProfessorRegistroDTO novoProfessor = professorService.salvar(professorRegistroDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoProfessor);
+    }
+
+    // GET - Consulta (agora com ID!)
     @GetMapping
     @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
-    public ResponseEntity<List<Professor>> getAllProfessor() {
-        return ResponseEntity.status(HttpStatus.OK).body(professorService.listarTodos());
+    public ResponseEntity<List<ProfessorRegistroDTO>> getAllProfessores() {
+        List<ProfessorRegistroDTO> professores = professorService.listarTodos();
+        return ResponseEntity.status(HttpStatus.OK).body(professores);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR', 'ALUNO')")
-    public ResponseEntity<?> getProfessorId(@PathVariable(value = "id") Long id) {
-        Optional<Professor> professor = professorService.buscarPorId(id);
-        if (professor.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Professor de id " + id + " não foi encontrado.");
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(professor.get());
+    @PreAuthorize("hasAnyRole('SECRETARIA') or @securityService.isUserOfId(#id)")
+    public ResponseEntity<ProfessorRegistroDTO> getProfessorById(@PathVariable Long id) {
+        ProfessorRegistroDTO professor = professorService.buscarPorId(id);
+        return ResponseEntity.status(HttpStatus.OK).body(professor);
+    }
+
+    @GetMapping("/{id}/disciplinas")
+    public ResponseEntity<Set<DisciplinaDto>> getDisciplinasByProfessorId(@PathVariable Long id) {
+        Set<DisciplinaDto> disciplinas = professorService.getDisciplinasByProfessorId(id);
+        return ResponseEntity.ok(disciplinas);
+    }
+
+    @PostMapping("/{professorId}/disciplinas/{disciplinaId}/lancar-notas")
+    @PreAuthorize("hasAnyRole('SECRETARIA') or @securityService.isUserOfId(#professorId)")
+    public ResponseEntity<HistoricoAcademicoDto> lancarNotas(
+            @PathVariable Long professorId,
+            @PathVariable Long disciplinaId,
+            @Valid @RequestBody HistoricoAcademicoDto historicoAcademicoDto
+    ) {
+        HistoricoAcademicoDto novoHistorico = historicoAcademicoService.salvar(historicoAcademicoDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoHistorico);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SECRETARIA')")
-    public ResponseEntity<?> atualizarProfessor(@PathVariable Long id, @Valid @RequestBody ProfessorDto professorDto) {
-        try {
-            Professor professorAtualizado = professorService.atualizar(id, professorDto);
-            return ResponseEntity.ok(professorAtualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<ProfessorRegistroDTO> atualizarProfessor(@PathVariable Long id, @Valid @RequestBody ProfessorRegistroDTO professorDto) {
+        ProfessorRegistroDTO professorAtualizado = professorService.atualizar(id, professorDto);
+        return ResponseEntity.ok(professorAtualizado);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SECRETARIA')")
-    public ResponseEntity<?> DeletarProfessor(@PathVariable(value = "id") Long id) {
-        try {
-            professorService.deletar(id);
-            return ResponseEntity.status(HttpStatus.OK).body("Professor id " + id + " removido com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletarProfessor(@PathVariable Long id) {
+        professorService.deletar(id);
     }
 }

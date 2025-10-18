@@ -2,9 +2,11 @@ package com.universidade.secretaria.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
+@Table(name = "historicos_academicos")
 public class HistoricoAcademico {
 
     @Id
@@ -14,17 +16,24 @@ public class HistoricoAcademico {
     private double nota;
     private double frequencia; // em porcentagem
 
-    @ManyToOne
+    @Column(nullable = false)
+    private String status; // Ex: Aprovado, Reprovado, Cursando
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime dataRegistro;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "aluno_id")
     private Aluno aluno;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "disciplina_id")
     private Disciplina disciplina;
 
     public HistoricoAcademico() {
     }
 
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -49,6 +58,22 @@ public class HistoricoAcademico {
         this.frequencia = frequencia;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getDataRegistro() {
+        return dataRegistro;
+    }
+
+    public void setDataRegistro(LocalDateTime dataRegistro) {
+        this.dataRegistro = dataRegistro;
+    }
+
     public Aluno getAluno() {
         return aluno;
     }
@@ -67,6 +92,7 @@ public class HistoricoAcademico {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         HistoricoAcademico that = (HistoricoAcademico) o;
         return Objects.equals(id, that.id);
@@ -74,6 +100,11 @@ public class HistoricoAcademico {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(id);
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.dataRegistro = LocalDateTime.now();
     }
 }

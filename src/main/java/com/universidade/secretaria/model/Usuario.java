@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
+@Table(name = "usuarios")
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -18,36 +19,27 @@ public class Usuario {
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(mappedBy = "usuario")
-    private Aluno aluno;
-
-    @OneToOne(mappedBy = "usuario")
-    private Professor professor;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "usuario_perfil",
             joinColumns = @JoinColumn(name = "usuario_id"),
             inverseJoinColumns = @JoinColumn(name = "perfil_id"))
-    private List<Perfil> perfils;
+    private List<Perfil> perfis;
 
     public Usuario() {
     }
 
-    public Usuario(long id, String username, String password, Aluno aluno, Professor professor, List<Perfil> perfils) {
-        this.id = id;
+    public Usuario(String username, String password, List<Perfil> perfils) {
         this.username = username;
         this.password = password;
-        this.aluno = aluno;
-        this.professor = professor;
-        this.perfils = perfils;
+        this.perfis = perfils;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -67,28 +59,12 @@ public class Usuario {
         this.password = password;
     }
 
-    public Aluno getAluno() {
-        return aluno;
+    public List<Perfil> getPerfis() {
+        return perfis;
     }
 
-    public void setAluno(Aluno aluno) {
-        this.aluno = aluno;
-    }
-
-    public Professor getProfessor() {
-        return professor;
-    }
-
-    public void setProfessor(Professor professor) {
-        this.professor = professor;
-    }
-
-    public List<Perfil> getPerfils() {
-        return perfils;
-    }
-
-    public void setPerfils(List<Perfil> perfils) {
-        this.perfils = perfils;
+    public void setPerfis(List<Perfil> perfis) {
+        this.perfis = perfis;
     }
 
     @Override

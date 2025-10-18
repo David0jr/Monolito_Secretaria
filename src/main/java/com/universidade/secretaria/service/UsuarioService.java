@@ -1,6 +1,5 @@
 package com.universidade.secretaria.service;
 
-
 import com.universidade.secretaria.model.Usuario;
 import com.universidade.secretaria.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;

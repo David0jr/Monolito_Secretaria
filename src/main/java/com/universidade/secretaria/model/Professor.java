@@ -3,15 +3,17 @@ package com.universidade.secretaria.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set; // Preferir Set em relacionamentos ManyToMany
 
 @Entity
+@Table(name = "professores")
 public class Professor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     private String nome;
 
@@ -20,36 +22,34 @@ public class Professor {
 
     private String especializacao;
 
-    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private Usuario usuario;
 
-    @ManyToMany(mappedBy = "professores")
-    @JsonIgnore // Importante para evitar o loop de serialização
-    private List<Disciplina> disciplinas;
+    @OneToMany(mappedBy = "professor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Disciplina> disciplinas = new HashSet<>();
 
     @ManyToMany(mappedBy = "professores")
-    @JsonIgnore
-    private List<Turma> turmas;
+    @JsonIgnore // Evita loops de serialização
+    private Set<Turma> turmas;
 
     public Professor() {
     }
 
-    public Professor(long id, String nome, String cpf, String especializacao, Usuario usuario, List<Turma> turmas) {
-        this.id = id;
+    public Professor(String nome, String cpf, String especializacao, Usuario usuario) {
         this.nome = nome;
         this.cpf = cpf;
         this.especializacao = especializacao;
         this.usuario = usuario;
-        this.turmas = turmas;
     }
 
-    public long getId() {
+    // Getters e Setters
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -85,11 +85,19 @@ public class Professor {
         this.usuario = usuario;
     }
 
-    public List<Turma> getTurmas() {
+    public Set<Disciplina> getDisciplinas() {
+        return disciplinas;
+    }
+
+    public void setDisciplinas(Set<Disciplina> disciplinas) {
+        this.disciplinas = disciplinas;
+    }
+
+    public Set<Turma> getTurmas() {
         return turmas;
     }
 
-    public void setTurmas(List<Turma> turmas) {
+    public void setTurmas(Set<Turma> turmas) {
         this.turmas = turmas;
     }
 
@@ -104,6 +112,4 @@ public class Professor {
     public int hashCode() {
         return Objects.hashCode(id);
     }
-
-
 }

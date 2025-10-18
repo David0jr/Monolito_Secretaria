@@ -1,18 +1,19 @@
 package com.universidade.secretaria.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set; // Use Set for ManyToMany relationships
 
 @Entity
+@Table(name = "alunos")
 public class Aluno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nome;
 
     @Column(unique = true, nullable = false)
@@ -21,26 +22,24 @@ public class Aluno {
     @Column(unique = true, nullable = false)
     private String cpf;
 
+    @Column(nullable = false)
     private LocalDate dataNascimento;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private Usuario usuario;
 
-    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HistoricoAcademico> historico;
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<HistoricoAcademico> historico;
 
-    @ManyToMany
-    @JoinTable(
-            name = "aluno_turma",
-            joinColumns = @JoinColumn(name = "aluno_id"),
-            inverseJoinColumns = @JoinColumn(name = "turma_id"))
-    private List<Turma> turmas;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "turma_id", nullable = false)
+    private Turma turma;
 
-    public Aluno() {
-    }
 
-    public Aluno(Long id, String nome, String matricula, String cpf, LocalDate dataNascimento, Usuario usuario, List<HistoricoAcademico> historico) {
+    public Aluno() {}
+
+    public Aluno(Long id, String nome, String matricula, String cpf, LocalDate dataNascimento, Usuario usuario, Set<HistoricoAcademico> historico, Turma turma) {
         this.id = id;
         this.nome = nome;
         this.matricula = matricula;
@@ -48,8 +47,10 @@ public class Aluno {
         this.dataNascimento = dataNascimento;
         this.usuario = usuario;
         this.historico = historico;
+        this.turma = turma;
     }
 
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -98,16 +99,25 @@ public class Aluno {
         this.usuario = usuario;
     }
 
-    public List<HistoricoAcademico> getHistorico() {
+    public Set<HistoricoAcademico> getHistorico() {
         return historico;
     }
 
-    public void setHistorico(List<HistoricoAcademico> historico) {
+    public void setHistorico(Set<HistoricoAcademico> historico) {
         this.historico = historico;
+    }
+
+    public Turma getTurma() {
+        return turma;
+    }
+
+    public void setTurma(Turma turma) {
+        this.turma = turma;
     }
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Aluno aluno = (Aluno) o;
         return Objects.equals(id, aluno.id);
@@ -115,6 +125,6 @@ public class Aluno {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(id);
     }
 }

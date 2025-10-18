@@ -1,0 +1,30 @@
+
+body { 
+    background-color: #f8f9fa; 
+}
+
+.content {
+    padding: 20px;
+    /* Adicione estas propriedades para o fundo */
+    background-image: url('../image/Gemini_Generated_Image_ty2vvhty2vvhty2v.png'); /* Caminho para sua imagem */
+    background-size: cover; /* Faz a imagem cobrir toda a área */
+    background-position: center; /* Centraliza a imagem */
+    background-repeat: no-repeat; /* Evita que a imagem se repita */
+    min-height: 100vh; /* Garante que o conteúdo ocupe toda a altura visível */
+    position: relative; /* Necessário para z-index ou overlays se precisar */
+}
+
+.sidebar { 
+    min-height: 100vh; 
+    background-color: #343a40; 
+    padding: 20px; 
+}
+.sidebar .nav-link { 
+    color: #f8f9fa; 
+}
+.sidebar .nav-link.active { 
+    background-color: #495057; 
+}
+.content { 
+    padding: 20px; 
+}

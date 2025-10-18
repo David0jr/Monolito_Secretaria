@@ -2,55 +2,60 @@ package com.universidade.secretaria.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.List;
+
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
+@Table(name = "disciplinas")
 public class Disciplina {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nome;
+
+    @Column(nullable = false)
     private int cargaHoraria;
 
-    @ManyToOne
-    @JoinColumn(name = "curso_id")
-    private Curso curso;
+    // Relacionamento ManyToMany com Curso (uma disciplina pode estar em vários cursos)
+    @ManyToMany(mappedBy = "disciplinas", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Curso> cursos = new HashSet<>();
 
-    @ManyToMany(mappedBy = "disciplinas")
-    @JsonIgnore // Importante para evitar loop
-    private List<Turma> turmas;
+    // Relacionamento ManyToMany com Turma (uma disciplina pode estar em várias turmas)
+    @ManyToMany(mappedBy = "disciplinas", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Turma> turmas = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "disciplina_professor",
-            joinColumns = @JoinColumn(name = "disciplina_id"),
-            inverseJoinColumns = @JoinColumn(name = "professor_id"))
-    private List<Professor> professores;
+    // Relacionamento ManyToOne com Professor (uma disciplina tem um professor)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "professor_id", nullable = false)
+    private Professor professor;
 
+    // Relacionamento ManyToMany para pré-requisitos (uma disciplina pode ter vários pré-requisitos e ser pré-requisito de várias)
     @ManyToMany
     @JoinTable(
             name = "disciplina_pre_requisito",
             joinColumns = @JoinColumn(name = "disciplina_id"),
             inverseJoinColumns = @JoinColumn(name = "pre_requisito_id"))
-    private List<Disciplina> preRequisitos;
+    private Set<Disciplina> preRequisitos = new HashSet<>();
 
     public Disciplina() {
     }
 
-    // O construtor foi corrigido para incluir a lista de professores
-    public Disciplina(Long id, String nome, int cargaHoraria, Curso curso, List<Turma> turmas, List<Professor> professores, List<Disciplina> preRequisitos) {
+    public Disciplina(Long id, int cargaHoraria, String nome, Set<Curso> cursos, Set<Disciplina> preRequisitos) {
         this.id = id;
-        this.nome = nome;
         this.cargaHoraria = cargaHoraria;
-        this.curso = curso;
-        this.turmas = turmas;
-        this.professores = professores; // Campo adicionado
+        this.nome = nome;
+        this.cursos = cursos; // Inicializa o Set de cursos
         this.preRequisitos = preRequisitos;
     }
 
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -75,40 +80,41 @@ public class Disciplina {
         this.cargaHoraria = cargaHoraria;
     }
 
-    public Curso getCurso() {
-        return curso;
+    public Set<Curso> getCursos() { // Retorna um Set de Cursos
+        return cursos;
     }
 
-    public void setCurso(Curso curso) {
-        this.curso = curso;
+    public void setCursos(Set<Curso> cursos) { // Define um Set de Cursos
+        this.cursos = cursos;
     }
 
-    public List<Turma> getTurmas() {
+    public Set<Turma> getTurmas() {
         return turmas;
     }
 
-    public void setTurmas(List<Turma> turmas) {
+    public void setTurmas(Set<Turma> turmas) {
         this.turmas = turmas;
     }
 
-    public List<Professor> getProfessores() {
-        return professores;
+    public Professor getProfessor() {
+        return professor;
     }
 
-    public void setProfessores(List<Professor> professores) {
-        this.professores = professores;
+    public void setProfessor(Professor professor) {
+        this.professor = professor;
     }
 
-    public List<Disciplina> getPreRequisitos() {
+    public Set<Disciplina> getPreRequisitos() {
         return preRequisitos;
     }
 
-    public void setPreRequisitos(List<Disciplina> preRequisitos) {
+    public void setPreRequisitos(Set<Disciplina> preRequisitos) {
         this.preRequisitos = preRequisitos;
     }
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Disciplina that = (Disciplina) o;
         return Objects.equals(id, that.id);
@@ -116,6 +122,6 @@ public class Disciplina {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(id);
     }
 }

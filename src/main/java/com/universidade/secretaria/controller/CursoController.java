@@ -1,65 +1,56 @@
 package com.universidade.secretaria.controller;
 
 import com.universidade.secretaria.dto.CursoDto;
-import com.universidade.secretaria.model.Curso;
 import com.universidade.secretaria.service.CursoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/api/cursos")
-@PreAuthorize("hasRole('SECRETARIA')")
+@PreAuthorize("hasRole('SECRETARIA')") // Apenas SECRETARIA pode gerenciar cursos
 public class CursoController {
 
-    @Autowired
-    private CursoService cursoService;
+    private final CursoService cursoService;
+
+    public CursoController(CursoService cursoService) {
+        this.cursoService = cursoService;
+    }
 
     @PostMapping
-    public ResponseEntity<?> createCurso(@Valid @RequestBody CursoDto cursoDto) {
-        try {
-            Curso novoCurso = cursoService.salvar(cursoDto);
-            return new ResponseEntity<>(novoCurso, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<CursoDto> createCurso(@Valid @RequestBody CursoDto cursoDto) {
+        CursoDto novoCurso = cursoService.salvar(cursoDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoCurso);
     }
 
     @GetMapping
-    public ResponseEntity<List<Curso>> getAllCursos() {
-        List<Curso> cursos = cursoService.listarTodos();
+    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR', 'ALUNO')") // Todos podem listar cursos
+    public ResponseEntity<List<CursoDto>> getAllCursos() {
+        List<CursoDto> cursos = cursoService.listarTodos();
         return ResponseEntity.ok(cursos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCursoById(@PathVariable Long id) {
-        return cursoService.buscarPorId(id)
-                .map(curso -> ResponseEntity.ok().body(curso))
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR', 'ALUNO')") // Todos podem buscar curso por ID
+    public ResponseEntity<CursoDto> getCursoById(@PathVariable Long id) {
+        CursoDto curso = cursoService.buscarPorId(id);
+        return ResponseEntity.ok(curso);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCurso(@PathVariable Long id, @Valid @RequestBody CursoDto cursoDto) {
-        try {
-            Curso cursoAtualizado = cursoService.atualizar(id, cursoDto);
-            return ResponseEntity.ok(cursoAtualizado);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<CursoDto> updateCurso(@PathVariable Long id, @Valid @RequestBody CursoDto cursoDto) {
+        CursoDto cursoAtualizado = cursoService.atualizar(id, cursoDto);
+        return ResponseEntity.ok(cursoAtualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCurso(@PathVariable Long id) {
-        try {
-            cursoService.deletar(id);
-            return ResponseEntity.ok("Curso deletado com sucesso!");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCurso(@PathVariable Long id) {
+        cursoService.deletar(id);
     }
 }

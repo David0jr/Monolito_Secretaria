@@ -1,65 +1,59 @@
 package com.universidade.secretaria.controller;
 
 import com.universidade.secretaria.dto.HistoricoAcademicoDto;
-import com.universidade.secretaria.model.HistoricoAcademico;
 import com.universidade.secretaria.service.HistoricoAcademicoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
+
 @RestController
+@CrossOrigin
 @RequestMapping("/api/historicos")
 public class HistoricoAcademicoController {
 
-    @Autowired
-    private HistoricoAcademicoService historicoService;
+    private final HistoricoAcademicoService historicoService;
 
-    // Apenas Secretaria e Professor podem gerenciar históricos
-    @PostMapping
-    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
-    public ResponseEntity<?> createHistorico(@Valid @RequestBody HistoricoAcademicoDto dto) {
-        try {
-            HistoricoAcademico novoHistorico = historicoService.salvar(dto);
-            return new ResponseEntity<>(novoHistorico, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public HistoricoAcademicoController(HistoricoAcademicoService historicoService) {
+        this.historicoService = historicoService;
     }
 
-    // Apenas Secretaria e Professor podem listar todos
+    @PostMapping
+    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
+    public ResponseEntity<HistoricoAcademicoDto> createHistorico(@Valid @RequestBody HistoricoAcademicoDto dto) {
+        HistoricoAcademicoDto novoHistorico = historicoService.salvar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoHistorico);
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
-    public ResponseEntity<List<HistoricoAcademico>> getAllHistoricos() {
-        List<HistoricoAcademico> historicos = historicoService.listarTodos();
+    public ResponseEntity<List<HistoricoAcademicoDto>> getAllHistoricos() {
+        List<HistoricoAcademicoDto> historicos = historicoService.listarTodos();
         return ResponseEntity.ok(historicos);
     }
 
-    // Apenas Secretaria e Professor podem atualizar
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
-    public ResponseEntity<?> updateHistorico(@PathVariable Long id, @Valid @RequestBody HistoricoAcademicoDto dto) {
-        try {
-            HistoricoAcademico historicoAtualizado = historicoService.atualizar(id, dto);
-            return ResponseEntity.ok(historicoAtualizado);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR', 'ALUNO')")
+    public ResponseEntity<HistoricoAcademicoDto> getHistoricoById(@PathVariable Long id) {
+        HistoricoAcademicoDto historico = historicoService.buscarPorId(id);
+        return ResponseEntity.ok(historico);
     }
 
-    // Apenas Secretaria e Professor podem deletar
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
+    public ResponseEntity<HistoricoAcademicoDto> updateHistorico(@PathVariable Long id, @Valid @RequestBody HistoricoAcademicoDto dto) {
+        HistoricoAcademicoDto historicoAtualizado = historicoService.atualizar(id, dto);
+        return ResponseEntity.ok(historicoAtualizado);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SECRETARIA', 'PROFESSOR')")
-    public ResponseEntity<?> deleteHistorico(@PathVariable Long id) {
-        try {
-            historicoService.deletar(id);
-            return ResponseEntity.ok("Histórico acadêmico deletado com sucesso!");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteHistorico(@PathVariable Long id) {
+        historicoService.deletar(id);
     }
 }

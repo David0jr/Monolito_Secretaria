@@ -1,77 +1,77 @@
 package com.universidade.secretaria.controller;
 
-import com.universidade.secretaria.dto.AlunoDto;
-import com.universidade.secretaria.dto.VincularUsuarioDto;
-import com.universidade.secretaria.model.Aluno;
+import com.universidade.secretaria.dto.AlunoCadastroDto;
 import com.universidade.secretaria.service.AlunoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/alunos")
-@PreAuthorize("hasRole('SECRETARIA')")
 public class AlunoController {
 
     @Autowired
     private AlunoService alunoService;
 
-    @PostMapping
-    public ResponseEntity<Aluno> salvarAluno(@RequestBody AlunoDto alunoDto) {
-        try {
-            Aluno novoAluno = alunoService.salvar(alunoDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoAluno);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
-    }
-
-    @PostMapping("/{alunoId}/vincular-usuario")//Vincula o Usuario a um aluno
-    public ResponseEntity<?> vincularUsuario(@PathVariable Long alunoId, @RequestBody VincularUsuarioDto vincularDto) {
-        try {
-            alunoService.vincularUsuario(alunoId, vincularDto);
-            return ResponseEntity.ok("Usuário vinculado com sucesso!");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
     @GetMapping
-    public ResponseEntity<List<Aluno>> getAllAluno() {
-        return ResponseEntity.status(HttpStatus.OK).body(alunoService.listarTodos());
+    public ResponseEntity<?> listarTodos() {
+        try {
+            List<AlunoCadastroDto> alunos = alunoService.listarTodos();
+            return ResponseEntity.ok(alunos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao listar alunos: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getAlunoId(@PathVariable(value = "id") Long id) {
-        Optional<Aluno> aluno = alunoService.buscarPorId(id);
-        if (aluno.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Aluno de id " + id + " não foi encontrado.");
+    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
+        try {
+            AlunoCadastroDto aluno = alunoService.buscarPorId(id);
+            return ResponseEntity.ok(aluno);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erro ao buscar aluno: " + e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.OK).body(aluno.get());
+    }
+
+    @PostMapping
+    public ResponseEntity<?> salvar(@Valid @RequestBody AlunoCadastroDto alunoCadastroDto) {
+        try {
+            System.out.println("Recebendo requisição para cadastrar aluno: " + alunoCadastroDto.username());
+            AlunoCadastroDto alunoSalvo = alunoService.salvar(alunoCadastroDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(alunoSalvo);
+        } catch (Exception e) {
+            System.err.println("ERRO no controller: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao cadastrar aluno: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> atualizarAluno(@PathVariable Long id, @RequestBody AlunoDto alunoDto) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody AlunoCadastroDto alunoCadastroDto) {
         try {
-            Aluno alunoAtualizado = alunoService.atualizar(id, alunoDto);
+            AlunoCadastroDto alunoAtualizado = alunoService.atualizar(id, alunoCadastroDto);
             return ResponseEntity.ok(alunoAtualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao atualizar aluno: " + e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> DeletarAluno(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
         try {
             alunoService.deletar(id);
-            return ResponseEntity.status(HttpStatus.OK).body("Aluno id " + id + " removido com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao deletar aluno: " + e.getMessage());
         }
     }
 }

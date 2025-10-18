@@ -1,19 +1,17 @@
 package com.universidade.secretaria.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.List;
+import java.util.Set;
 
 public record DisciplinaDto(
-        @NotBlank(message = "O nome da disciplina é obrigatório")
+        Long id,
         String nome,
-
-        @NotNull(message = "A carga horária é obrigatória")
-        Integer cargaHoraria,
-
-        @NotNull(message = "O curso é obrigatório")
-        Long cursoId,
-
-        List<Long> preRequisitosIds) {
+        int cargaHoraria,
+        Set<Long> cursosIds, // Agora um SET de IDs de cursos
+        List<String> nomesCursos, // Lista de nomes dos cursos
+        Long professorId,
+        String nomeProfessor,
+        Set<Long> preRequisitosIds,
+        List<String> nomesPreRequisitos // List de nomes dos pré-requisitos
+) {
 }

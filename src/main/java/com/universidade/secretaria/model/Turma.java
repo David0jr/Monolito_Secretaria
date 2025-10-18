@@ -3,10 +3,12 @@ package com.universidade.secretaria.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set; // Use Set instead of List for ManyToMany relationships
 
 @Entity
+@Table(name = "turmas")
 public class Turma {
 
     @Id
@@ -15,26 +17,35 @@ public class Turma {
 
     private String periodo;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "turma_disciplina",
             joinColumns = @JoinColumn(name = "turma_id"),
             inverseJoinColumns = @JoinColumn(name = "disciplina_id"))
-    private List<Disciplina> disciplinas;
+    private Set<Disciplina> disciplinas;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "turma_professor",
             joinColumns = @JoinColumn(name = "turma_id"),
             inverseJoinColumns = @JoinColumn(name = "professor_id"))
-    private List<Professor> professores;
+    private Set<Professor> professores;
 
-    @ManyToMany(mappedBy = "turmas")
-    @JsonIgnore
-    private List<Aluno> alunos;
+    @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore // Evita loop infinito
+    private Set<Aluno> alunos = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "curso_id")
+    private Curso curso;
 
     public Turma() {}
 
+    public Turma(String periodo) {
+        this.periodo = periodo;
+    }
+
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -51,29 +62,38 @@ public class Turma {
         this.periodo = periodo;
     }
 
-    public List<Disciplina> getDisciplinas() {
+    public Set<Disciplina> getDisciplinas() {
         return disciplinas;
     }
 
-    public void setDisciplinas(List<Disciplina> disciplinas) {
+    public void setDisciplinas(Set<Disciplina> disciplinas) {
         this.disciplinas = disciplinas;
     }
 
-    public List<Professor> getProfessores() {
+    public Set<Professor> getProfessores() {
         return professores;
     }
 
-    public void setProfessores(List<Professor> professores) {
+    public void setProfessores(Set<Professor> professores) {
         this.professores = professores;
     }
 
-    public List<Aluno> getAlunos() {
+    public Set<Aluno> getAlunos() {
         return alunos;
     }
 
-    public void setAlunos(List<Aluno> alunos) {
+    public void setAlunos(Set<Aluno> alunos) {
         this.alunos = alunos;
     }
+
+    public Curso getCurso() {
+        return curso;
+    }
+
+    public void setCurso(Curso curso) {
+        this.curso = curso;
+    }
+
 
     @Override
     public boolean equals(Object o) {
@@ -85,6 +105,6 @@ public class Turma {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(id);
     }
 }

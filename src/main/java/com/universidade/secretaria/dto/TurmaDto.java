@@ -4,7 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 public record TurmaDto(
-        @NotBlank(message = "O período é obrigatório") String periodo,
-        List<Long> disciplinasIds
-
+        Long id, @NotBlank(message = "O período é obrigatório")
+        String periodo,
+        Long cursoId,
+        List<Long> disciplinasIds,
+        List<Long> professoresIds,
+        List<Long> alunosIds
 ) {}
